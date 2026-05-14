@@ -1,6 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { FoundPet } from './entities/found-pet.entity';
 import { CreateFoundPetDto } from './dto/create-found-pet.dto';
 import { LostPet } from '../lost-pets/entities/lost-pet.entity';
@@ -22,7 +24,29 @@ export class FoundPetsService {
     @InjectRepository(LostPet)
     private readonly lostPetsRepository: Repository<LostPet>,
     private readonly mailService: MailService,
+    @Inject(CACHE_MANAGER)
+    private cacheManager: Cache,
   ) {}
+
+  async findAll(): Promise<FoundPet[]> {
+    const cacheKey = 'found_pets_all';
+
+    // Intentar obtener del caché
+    const cachedData = await this.cacheManager.get<FoundPet[]>(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
+
+    // Si no está en caché, obtener de la base de datos
+    const data = await this.foundPetsRepository.find({
+      order: { found_date: 'DESC' },
+    });
+
+    // Guardar en caché
+    await this.cacheManager.set(cacheKey, data);
+
+    return data;
+  }
 
   async create(createFoundPetDto: CreateFoundPetDto) {
     const foundPet = await this.foundPetsRepository.save(
@@ -64,6 +88,11 @@ export class FoundPetsService {
         }
       }),
     );
+
+    // Invalidar caché después de crear un nuevo registro
+    await this.cacheManager.del('found_pets_all');
+    // Invalidar el caché de mascotas perdidas también, en caso que se use en otra parte
+    await this.cacheManager.del('lost_pets_all');
 
     return {
       foundPet,

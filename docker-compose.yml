@@ -1,4 +1,5 @@
 services:
+  # PostgreSQL con PostGIS
   postgis:
     image: postgis/postgis:16-3.4
     container_name: petradar-postgis
@@ -11,6 +12,58 @@ services:
       - "5433:5432"
     volumes:
       - postgis_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis para caché
+  redis:
+    image: redis:7-alpine
+    container_name: petradar-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # NestJS Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: petradar-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      DB_HOST: postgis
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: petradar
+      DB_SYNCHRONIZE: 'false'
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CACHE_TTL: 600
+      # Descomenta la siguiente línea si tienes Application Insights
+      # APPLICATIONINSIGHTS_CONNECTION_STRING: ${APPLICATIONINSIGHTS_CONNECTION_STRING}
+    depends_on:
+      postgis:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: node dist/main.js
 
 volumes:
   postgis_data:
+  redis_data:
+
