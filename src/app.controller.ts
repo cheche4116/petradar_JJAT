@@ -17,4 +17,9 @@ export class AppController {
       timestamp: new Date().toISOString(),
     };
   }
+
+  @Get('status')
+  status(): { status: string; timestamp: string } {
+    return this.health();
+  }
 }
