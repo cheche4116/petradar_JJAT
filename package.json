@@ -13,6 +13,7 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
+    "seed:demo": "node scripts/seed-demo-data.js",
     "lint": "eslint \"src/**/*.ts\" --fix"
   },
   "dependencies": {
