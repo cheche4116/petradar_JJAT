@@ -1,69 +1,114 @@
-# PetRadar API
+# PetRadar API - Entrega de Despliegue
 
-API desarrollada con NestJS para registrar mascotas perdidas y encontradas. El proyecto fue desplegado en Railway junto con una base de datos PostgreSQL en linea, por lo que no depende de una base local ni de una API ejecutandose en el equipo del alumno.
+## 1. Proyecto Desplegado en Internet
 
-## URL publica
+<u>La API de PetRadar fue desplegada en Railway y esta disponible publicamente en internet.</u>
 
-API desplegada:
+URL publica de la API:
 
 ```text
 https://petradarjjat-production.up.railway.app
 ```
 
-Endpoint de verificacion:
+Endpoint de prueba:
 
 ```text
 https://petradarjjat-production.up.railway.app/health
 ```
 
-Endpoint de lectura con datos reales:
+Resultado esperado:
 
-```text
-https://petradarjjat-production.up.railway.app/lost-pets
+```json
+{
+  "status": "ok",
+  "timestamp": "fecha-generada-por-el-servidor"
+}
 ```
 
-Este endpoint devuelve registros almacenados en la base de datos PostgreSQL alojada en Railway, por ejemplo mascotas como `Luna` y `Rocky`.
+---
 
-## Repositorio
+## 2. Base de Datos en Linea
+
+<u>La base de datos no esta en mi computadora.</u>
+
+<u>La base de datos esta alojada en Railway usando PostgreSQL.</u>
+
+Servicio usado:
 
 ```text
-https://github.com/cheche4116/petradar_JJAT
+Postgres en Railway
 ```
 
-## Tecnologias utilizadas
-
-- NestJS
-- TypeScript
-- TypeORM
-- PostgreSQL
-- Docker
-- Railway
-
-## Base de datos en linea
-
-La base de datos esta alojada en Railway usando el servicio PostgreSQL del mismo proyecto.
-
-La API se conecta a la base mediante la variable de entorno:
+La API se conecta a PostgreSQL mediante la variable de entorno:
 
 ```env
 DATABASE_URL=${{Postgres.DATABASE_URL}}
 ```
 
-Las tablas principales son:
+Esto permite que la API funcione aunque mi equipo este apagado.
 
-- `lost_pets`: mascotas reportadas como perdidas.
-- `found_pets`: mascotas reportadas como encontradas.
+---
 
-La ubicacion de cada mascota se guarda en la columna `location` como JSON con este formato:
+## 3. Endpoint de Lectura con Datos Reales
 
-```json
-{
-  "type": "Point",
-  "coordinates": [-99.1332, 19.4326]
-}
+<u>Este endpoint consulta datos reales guardados en la base de datos en linea.</u>
+
+Endpoint:
+
+```text
+GET https://petradarjjat-production.up.railway.app/lost-pets
 ```
 
-## Variables de entorno usadas en Railway
+Datos que devuelve:
+
+```text
+Rocky
+Luna
+```
+
+Ejemplo de respuesta:
+
+```json
+[
+  {
+    "id": 2,
+    "name": "Rocky",
+    "species": "perro",
+    "breed": "labrador",
+    "address": "Roma Sur, CDMX",
+    "is_active": true
+  },
+  {
+    "id": 1,
+    "name": "Luna",
+    "species": "gato",
+    "breed": "mestizo",
+    "address": "Centro, CDMX",
+    "is_active": true
+  }
+]
+```
+
+---
+
+## 4. Servicios en Railway
+
+En Railway se configuraron dos servicios:
+
+```text
+petradar_JJAT  -> API NestJS
+Postgres       -> Base de datos PostgreSQL
+```
+
+<u>La API y la base de datos estan alojadas en linea.</u>
+
+<u>No se usa localhost para el despliegue.</u>
+
+---
+
+## 5. Variables de Entorno del Despliegue
+
+Variables principales configuradas en Railway:
 
 ```env
 NODE_ENV=production
@@ -75,113 +120,101 @@ DB_MIGRATIONS_RUN=true
 CACHE_TTL=600
 ```
 
-## Proceso de despliegue
+Estas variables permiten:
 
-1. Se subio el proyecto al repositorio de GitHub.
-2. En Railway se creo un nuevo proyecto.
-3. Se agrego un servicio PostgreSQL para alojar la base de datos en linea.
-4. Se agrego un servicio para la API conectandolo con el repositorio de GitHub.
-5. Railway construyo la API usando el `Dockerfile` del proyecto.
-6. Se configuraron las variables de entorno necesarias para conectar la API con PostgreSQL.
-7. Se genero un dominio publico para acceder a la API desde internet.
-8. Se cargaron datos de demostracion en la base de datos usando el script:
+- Ejecutar la API en modo produccion.
+- Usar el puerto requerido por Railway.
+- Conectar la API con PostgreSQL en linea.
+- Ejecutar migraciones para crear las tablas.
 
-```bash
-npm run seed:demo
+---
+
+## 6. Tecnologias Utilizadas
+
+```text
+NestJS
+TypeScript
+TypeORM
+PostgreSQL
+Docker
+Railway
+GitHub
 ```
 
-## Endpoints principales
+---
 
-### Health check
+## 7. Proceso de Despliegue
 
-```http
-GET /health
-```
+1. El proyecto se subio a GitHub.
+2. Railway se conecto al repositorio.
+3. Railway construyo la API usando Docker.
+4. Se creo una base de datos PostgreSQL en Railway.
+5. Se configuraron las variables de entorno.
+6. Se genero un dominio publico para la API.
+7. Se cargaron datos de demostracion en la base de datos.
+8. Se probo el endpoint publico `/lost-pets`.
 
-Respuesta esperada:
+---
 
-```json
-{
-  "status": "ok",
-  "timestamp": "2026-06-23T03:00:00.000Z"
-}
-```
+## 8. Repositorio de GitHub
 
-### Mascotas perdidas
-
-```http
-GET /lost-pets
-```
-
-Devuelve mascotas activas registradas en la base de datos en linea.
-
-Ejemplo de respuesta:
-
-```json
-[
-  {
-    "id": 2,
-    "name": "Rocky",
-    "species": "perro",
-    "breed": "labrador",
-    "color": "cafe",
-    "size": "grande",
-    "description": "Responde a silbidos",
-    "address": "Roma Sur, CDMX",
-    "is_active": true
-  },
-  {
-    "id": 1,
-    "name": "Luna",
-    "species": "gato",
-    "breed": "mestizo",
-    "color": "negro",
-    "size": "pequeno",
-    "description": "Collar rojo y mancha blanca en el pecho",
-    "address": "Centro, CDMX",
-    "is_active": true
-  }
-]
-```
-
-### Mascotas encontradas
-
-```http
-GET /found-pets
-```
-
-Devuelve los reportes de mascotas encontradas almacenados en la base de datos.
-
-## Guion sugerido para el video
-
-1. Mostrar el repositorio de GitHub:
+Repositorio:
 
 ```text
 https://github.com/cheche4116/petradar_JJAT
 ```
 
-2. Mostrar Railway con dos servicios:
+---
 
-- `petradar_JJAT`: API desplegada.
-- `Postgres`: base de datos en linea.
+## 9. Evidencia Para Mostrar en Video
 
-3. Explicar que la API usa `DATABASE_URL` para conectarse a la base de datos alojada en Railway.
+### Mostrar Railway
 
-4. Abrir el endpoint de salud:
+Se deben ver dos servicios:
+
+```text
+petradar_JJAT
+Postgres
+```
+
+### Mostrar Health Check
+
+Abrir:
 
 ```text
 https://petradarjjat-production.up.railway.app/health
 ```
 
-5. Abrir el endpoint de lectura:
+Debe responder:
+
+```text
+status: ok
+```
+
+### Mostrar Datos Reales
+
+Abrir:
 
 ```text
 https://petradarjjat-production.up.railway.app/lost-pets
 ```
 
-6. Mencionar que los datos mostrados vienen de PostgreSQL en Railway y no de una base local.
+Debe mostrar registros como:
 
-## Estado del despliegue
+```text
+Rocky
+Luna
+```
 
-La API esta disponible publicamente y el endpoint `/lost-pets` devuelve datos reales desde la base de datos en linea.
+---
+
+## 10. Conclusiones
+
+<u>La API esta publicada en internet.</u>
+
+<u>La base de datos esta publicada en internet.</u>
+
+<u>El endpoint `/lost-pets` devuelve datos reales desde PostgreSQL en Railway.</u>
+
+<u>El proyecto cumple con el requisito de no depender del equipo local del alumno.</u>
 
