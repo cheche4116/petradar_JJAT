@@ -1,7 +1,5 @@
 
 
-CREATE EXTENSION IF NOT EXISTS postgis;
-
 TRUNCATE TABLE found_pets RESTART IDENTITY CASCADE;
 TRUNCATE TABLE lost_pets RESTART IDENTITY CASCADE;
 
@@ -35,7 +33,7 @@ VALUES (
   'Ana Lopez',
   'ana@example.com',
   '555-123-4567',
-  ST_SetSRID(ST_MakePoint(-99.133200, 19.432600), 4326),
+  '{"type":"Point","coordinates":[-99.133200,19.432600]}'::jsonb,
   'Centro, CDMX',
   NOW() - INTERVAL '2 days',
   true,
@@ -73,7 +71,7 @@ VALUES (
   'Luis Perez',
   'luis@example.com',
   '555-222-3344',
-  ST_SetSRID(ST_MakePoint(-99.150000, 19.420000), 4326),
+  '{"type":"Point","coordinates":[-99.150000,19.420000]}'::jsonb,
   'Roma Sur, CDMX',
   NOW() - INTERVAL '1 day',
   true,
@@ -110,7 +108,7 @@ VALUES (
   'Maria Diaz',
   'maria@example.com',
   '555-998-7766',
-  ST_SetSRID(ST_MakePoint(-99.133000, 19.432700), 4326),
+  '{"type":"Point","coordinates":[-99.133000,19.432700]}'::jsonb,
   'Centro Historico, CDMX',
   NOW() - INTERVAL '4 days',
   false,
@@ -118,19 +116,7 @@ VALUES (
   NOW()
 );
 
-SELECT
-  lp.id,
-  lp.name,
-  lp.owner_email,
-  ST_Distance(
-    lp.location::geography,
-    ST_SetSRID(ST_MakePoint(-99.132900, 19.433100), 4326)::geography
-  ) AS distance_meters
-FROM lost_pets lp
-WHERE lp.is_active = true
-  AND ST_DWithin(
-    lp.location::geography,
-    ST_SetSRID(ST_MakePoint(-99.132900, 19.433100), 4326)::geography,
-    500
-  )
-ORDER BY distance_meters ASC;
+SELECT id, name, owner_email, location
+FROM lost_pets
+WHERE is_active = true
+ORDER BY lost_date DESC;

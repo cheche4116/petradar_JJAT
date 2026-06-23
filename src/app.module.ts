@@ -6,7 +6,6 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { LostPetsModule } from './lost-pets/lost-pets.module';
 import { FoundPetsModule } from './found-pets/found-pets.module';
-import { PostgisService } from './database/postgis.service';
 import { AppInsightsService } from './monitoring/app-insights.service';
 import { redisStore } from 'cache-manager-redis-store';
 import { InitialPetRadarSchema1710000000000 } from './database/migrations/InitialPetRadarSchema';
@@ -66,6 +65,6 @@ import { InitialPetRadarSchema1710000000000 } from './database/migrations/Initia
     FoundPetsModule,
   ],
   controllers: [AppController],
-  providers: [AppService, PostgisService, AppInsightsService],
+  providers: [AppService, AppInsightsService],
 })
 export class AppModule {}

@@ -4,8 +4,6 @@ export class InitialPetRadarSchema1710000000000 implements MigrationInterface {
   name = 'InitialPetRadarSchema1710000000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query('CREATE EXTENSION IF NOT EXISTS postgis');
-
     await queryRunner.query(`
       CREATE TABLE IF NOT EXISTS lost_pets (
         id SERIAL PRIMARY KEY,
@@ -19,7 +17,7 @@ export class InitialPetRadarSchema1710000000000 implements MigrationInterface {
         owner_name varchar(255) NOT NULL,
         owner_email varchar(255) NOT NULL,
         owner_phone varchar(50) NOT NULL,
-        location geometry(Point, 4326) NOT NULL,
+        location jsonb NOT NULL,
         address varchar(255) NOT NULL,
         lost_date timestamp NOT NULL,
         is_active boolean NOT NULL DEFAULT true,
@@ -40,7 +38,7 @@ export class InitialPetRadarSchema1710000000000 implements MigrationInterface {
         finder_name varchar(255) NOT NULL,
         finder_email varchar(255) NOT NULL,
         finder_phone varchar(50) NOT NULL,
-        location geometry(Point, 4326) NOT NULL,
+        location jsonb NOT NULL,
         address varchar(255) NOT NULL,
         found_date timestamp NOT NULL,
         created_at timestamp NOT NULL DEFAULT now(),
@@ -48,12 +46,8 @@ export class InitialPetRadarSchema1710000000000 implements MigrationInterface {
       )
     `);
 
-    await queryRunner.query(
-      'CREATE INDEX IF NOT EXISTS idx_lost_pets_location ON lost_pets USING gist(location)',
-    );
-    await queryRunner.query(
-      'CREATE INDEX IF NOT EXISTS idx_found_pets_location ON found_pets USING gist(location)',
-    );
+    await queryRunner.query('CREATE INDEX IF NOT EXISTS idx_lost_pets_location ON lost_pets USING gin(location)');
+    await queryRunner.query('CREATE INDEX IF NOT EXISTS idx_found_pets_location ON found_pets USING gin(location)');
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

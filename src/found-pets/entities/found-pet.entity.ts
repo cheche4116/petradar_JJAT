@@ -43,11 +43,7 @@ export class FoundPet {
   @Column({ type: 'varchar', length: 50 })
   finder_phone: string;
 
-  @Column({
-    type: 'geometry',
-    spatialFeatureType: 'Point',
-    srid: 4326,
-  })
+  @Column({ type: 'jsonb' })
   location: GeoPoint;
 
   @Column({ type: 'varchar', length: 255 })

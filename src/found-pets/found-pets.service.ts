@@ -10,8 +10,6 @@ import { MailService } from '../notifications/mail.service';
 
 type LostPetMatch = LostPet & {
   distance: number;
-  lost_lat: number;
-  lost_lng: number;
 };
 
 @Injectable()
@@ -75,8 +73,8 @@ export class FoundPetsService {
             foundPet,
             distanceMeters: Number(match.distance),
             lostCoords: {
-              lat: Number(match.lost_lat),
-              lng: Number(match.lost_lng),
+              lat: match.location.coordinates[1],
+              lng: match.location.coordinates[0],
             },
             foundCoords: createFoundPetDto.location,
           });
@@ -110,25 +108,41 @@ export class FoundPetsService {
     lng: number,
     lat: number,
   ): Promise<LostPetMatch[]> {
-    const query = `
-      SELECT
-        lp.*,
-        ST_Distance(
-          lp.location::geography,
-          ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography
-        ) AS distance,
-        ST_Y(lp.location::geometry) AS lost_lat,
-        ST_X(lp.location::geometry) AS lost_lng
-      FROM lost_pets lp
-      WHERE lp.is_active = true
-        AND ST_DWithin(
-          lp.location::geography,
-          ST_SetSRID(ST_MakePoint($1, $2), 4326)::geography,
-          500
-        )
-      ORDER BY distance ASC
-    `;
+    const activeLostPets = await this.lostPetsRepository.find({
+      where: { is_active: true },
+    });
 
-    return this.lostPetsRepository.query(query, [lng, lat]);
+    return activeLostPets
+      .map((lostPet) => ({
+        ...lostPet,
+        distance: this.getDistanceInMeters(
+          lat,
+          lng,
+          lostPet.location.coordinates[1],
+          lostPet.location.coordinates[0],
+        ),
+      }))
+      .filter((lostPet) => lostPet.distance <= 500)
+      .sort((a, b) => a.distance - b.distance);
+  }
+
+  private getDistanceInMeters(
+    lat1: number,
+    lng1: number,
+    lat2: number,
+    lng2: number,
+  ): number {
+    const earthRadiusMeters = 6371000;
+    const toRadians = (value: number) => (value * Math.PI) / 180;
+    const deltaLat = toRadians(lat2 - lat1);
+    const deltaLng = toRadians(lng2 - lng1);
+
+    const a =
+      Math.sin(deltaLat / 2) ** 2 +
+      Math.cos(toRadians(lat1)) *
+        Math.cos(toRadians(lat2)) *
+        Math.sin(deltaLng / 2) ** 2;
+
+    return earthRadiusMeters * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   }
 }

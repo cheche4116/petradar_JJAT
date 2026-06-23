@@ -46,11 +46,7 @@ export class LostPet {
   @Column({ type: 'varchar', length: 50 })
   owner_phone: string;
 
-  @Column({
-    type: 'geometry',
-    spatialFeatureType: 'Point',
-    srid: 4326,
-  })
+  @Column({ type: 'jsonb' })
   location: GeoPoint;
 
   @Column({ type: 'varchar', length: 255 })
